@@ -33,7 +33,7 @@ public class UserController {
     @GetMapping("/id/{id}")
     public ResponseEntity fetchUserById (@PathVariable("id")Integer id)
     {
-        UserDto Data= userService.getById(id);
+        UserDto Data=  userService.getById(id);
         return ResponseEntity.ok(
                 Map.of("message","USER FETCHED SUCCESSFULLY!!!!","data",Data)
         );

@@ -7,8 +7,7 @@ import jakarta.validation.constraints.NotNull;
 public class DoctorDto {
     private Integer id;
     private String name;
-    @NotNull(message = "NMC number Cannot be Null!!!")
-    @NotBlank(message="NMC number Cannot be Blank!!!")
+
     private Integer nmc;
     @NotNull(message = "Speciality Cannot be Null!!!")
     @NotBlank(message="Speciality Cannot be Blank!!!")

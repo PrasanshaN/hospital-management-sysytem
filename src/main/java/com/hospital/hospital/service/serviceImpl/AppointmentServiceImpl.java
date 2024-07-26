@@ -1,6 +1,7 @@
 package com.hospital.hospital.service.serviceImpl;
 
 import com.hospital.hospital.dto.AppointmentDto;
+import com.hospital.hospital.dto.EmailDto;
 import com.hospital.hospital.enums.AppointmentStatus;
 import com.hospital.hospital.enums.Role;
 import com.hospital.hospital.exception.NoSeatAvailableException;
@@ -12,6 +13,7 @@ import com.hospital.hospital.repo.AppointmentRepo;
 import com.hospital.hospital.repo.DoctorRepo;
 import com.hospital.hospital.repo.UserRepo;
 import com.hospital.hospital.service.AppointmentService;
+import com.hospital.hospital.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,12 +31,14 @@ public class AppointmentServiceImpl implements AppointmentService {
     private UserRepo userRepo;
     @Autowired
     private DoctorRepo doctorRepo;
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public void saveAppointment(AppointmentDto appointmentDto) {
-        User user = userRepo.findById(appointmentDto.getPatientId())
+        User patient = userRepo.findById(appointmentDto.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        if(!user.getRole().equals(Role.PATIENT))
+        if(!patient.getRole().equals(Role.PATIENT))
         {
             throw new RuntimeException("User must be patient!!");
         }
@@ -44,14 +48,20 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         AppointmentDetails appointmentDetails=new AppointmentDetails();
         appointmentDetails.setDoctorDetails(doctorDetails);
-        appointmentDetails.setUser(user);
+        appointmentDetails.setUser(patient);
         appointmentDetails.setDateOfAppointment(appointmentDto.getDateOfAppointment());
         appointmentDetails.setDescription(appointmentDto.getDescription());
-appointmentDetails.setAppointmentStatus(AppointmentStatus.PENDING);
+        appointmentDetails.setAppointmentStatus(AppointmentStatus.PENDING);
 
         //status save garne ho yesma
        appointmentRepo.save(appointmentDetails);
-
+       try {
+           String message = String.format("Dear %s, \n Your Appointment has been booked to %s", patient.getFullName(), doctorDetails.getUser().getFullName());
+           EmailDto emailDto = new EmailDto("Appointment Confirmation", message, patient.getEmail());
+           emailService.sendEmail(emailDto);
+       }catch (Exception e){
+           throw new RuntimeException("Appointment has been booked but unable to send email");
+       }
     }
 
     @Override

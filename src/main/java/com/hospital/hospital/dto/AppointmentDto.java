@@ -13,8 +13,7 @@ public class AppointmentDto {
 
     private String patientName;
     private String docName;
-    @NotNull(message = "Description Cannot be Null!!!")
-    @NotBlank(message="Description Cannot be Blank!!!")
+
     private String description;
     private Integer patientId;
     private Integer doctorId;
