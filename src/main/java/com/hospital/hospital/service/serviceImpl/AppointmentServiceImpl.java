@@ -56,8 +56,8 @@ public class AppointmentServiceImpl implements AppointmentService {
         //status save garne ho yesma
        appointmentRepo.save(appointmentDetails);
        try {
-           String message = String.format("Dear %s, \n Your Appointment has been booked to %s", patient.getFullName(), doctorDetails.getUser().getFullName());
-           EmailDto emailDto = new EmailDto("Appointment Confirmation", message, patient.getEmail());
+           String message = String.format("Dear %s, \n Your Appointment has been booked to %s  %s.\n Confirmation is yet to come after the availability of seat is checked.", patient.getFullName(),doctorDetails.getSpeciality(), doctorDetails.getUser().getFullName());
+           EmailDto emailDto = new EmailDto("Appointment Booked!", message, patient.getEmail());
            emailService.sendEmail(emailDto);
        }catch (Exception e){
            throw new RuntimeException("Appointment has been booked but unable to send email");
@@ -94,18 +94,30 @@ return appointmentDtoList;
 
         DoctorDetails doctorDetails=doctorRepo.findById(appointmentDetails.getDoctorDetails().getId())
                 .orElseThrow(()->new ResourceNotFoundException("Doctor not found"));
+        User patient =userRepo.findById(appointmentDetails.getUser().getId())
+                .orElseThrow(()-> new ResourceNotFoundException("Patient  Not Found"));
         boolean seatsAvailable=checkSeatAvailability(doctorDetails,appointmentDetails.getDateOfAppointment());
         if (isApproved && seatsAvailable) {
             appointmentDetails.setAppointmentStatus(AppointmentStatus.ACCEPTED);
             appointmentRepo.save(appointmentDetails);
+            String message = String.format("Dear %s, \n Your Appointment has been confirmed.\n Please kindly visit between 10am to 12am.", patient.getFullName());
+            EmailDto emailDto = new EmailDto("Appointment Confirmation", message, patient.getEmail());
+            emailService.sendEmail(emailDto);
             return Map.of("message", "Appointment approved successfully", "status", "APPROVED");
         } else if (!isApproved) {
             appointmentDetails.setAppointmentStatus(AppointmentStatus.REJECTED);
             appointmentRepo.save(appointmentDetails);
+            String message = String.format("Dear %s, \n Your Appointment has been rejected.\n Your appointment request was not aprroved.", patient.getFullName());
+            EmailDto emailDto = new EmailDto("Appointment rejection", message, patient.getEmail());
+            emailService.sendEmail(emailDto);
             return Map.of("message", "Appointment rejected successfully", "status", "REJECTED");
         } else {
+            String message = String.format("Dear %s, \n Your Appointment has been rejected.\n The number of patient were already fulfilled.so try booking for tommorrow.", patient.getFullName());
+            EmailDto emailDto = new EmailDto("Appointment Rejection", message, patient.getEmail());
+            emailService.sendEmail(emailDto);
             throw new NoSeatAvailableException("No seats available");
         }
+
     }
 
     @Override
